@@ -1,0 +1,893 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="의류 수거 서비스 앱/웹 개발 (Flutterflow + Supabase) — 프로젝트 제안서" />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+  <link href="https://cdn.jsdelivr.net/gh/sun-typeface/SUIT@2/fonts/variable/woff2/SUIT-Variable.css" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['SUIT Variable', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'monospace']
+          },
+          colors: {
+            brand: {
+              50: '#f0f9ff',
+              100: '#e0f2fe',
+              200: '#bae6fd',
+              600: '#0284c7',
+              700: '#0369a1'
+            }
+          },
+          boxShadow: {
+            soft: '0 10px 30px -18px rgba(15, 23, 42, 0.35)'
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    :root { color-scheme: light; font-size: 16px; }
+    body {
+      font-family: 'SUIT Variable', sans-serif;
+      font-size: 1rem;
+      background-image:
+        radial-gradient(circle at 12% 18%, rgba(14, 165, 233, 0.08), transparent 42%),
+        radial-gradient(circle at 88% 82%, rgba(2, 132, 199, 0.06), transparent 48%);
+    }
+    .doc-content h1, .doc-content h2, .doc-content h3, .doc-content h4 {
+      color: rgb(15 23 42); font-weight: 700; letter-spacing: -0.01em;
+      line-height: 1.3; margin-top: 1.6em; margin-bottom: 0.7em;
+    }
+    .doc-content h1 { font-size: 2rem; margin-top: 0.2em; }
+    .doc-content h2 { font-size: 1.4rem; }
+    .doc-content h3 { font-size: 1.15rem; }
+    .doc-content p, .doc-content li {
+      color: rgb(51 65 85); line-height: 1.8; font-size: 1rem;
+    }
+    .doc-content p, .doc-content ul, .doc-content ol,
+    .doc-content table, .doc-content pre, .doc-content blockquote {
+      margin-bottom: 1rem;
+    }
+    .doc-content ul, .doc-content ol { padding-left: 1.2rem; }
+    .doc-content ul { list-style: disc; }
+    .doc-content ol { list-style: decimal; }
+    .doc-content table {
+      width: 100%; border-collapse: collapse;
+      border: 1px solid rgb(226 232 240); border-radius: 0.75rem;
+      overflow: hidden; font-size: 1rem;
+    }
+    .doc-content th, .doc-content td {
+      border: 1px solid rgb(226 232 240); padding: 0.7rem 0.8rem;
+      text-align: left; vertical-align: top;
+    }
+    .doc-content th {
+      background: rgb(248 250 252); color: rgb(30 41 59); font-weight: 600;
+    }
+    .doc-content pre, .doc-content code {
+      font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+    }
+    .doc-content pre {
+      background: rgb(15 23 42); color: rgb(226 232 240);
+      padding: 1rem; border-radius: 0.75rem; overflow-x: auto;
+      font-size: 1rem; line-height: 1.65;
+    }
+    .doc-content p code, .doc-content li code,
+    .doc-content td code, .doc-content th code {
+      background: rgb(241 245 249); color: rgb(15 23 42);
+      border: 1px solid rgb(226 232 240); border-radius: 0.4rem;
+      padding: 0.08rem 0.4rem; font-size: 1em;
+    }
+    .doc-content blockquote {
+      border-left: 3px solid rgb(14 165 233); padding-left: 0.85rem;
+      color: rgb(71 85 105); background: rgb(240 249 255);
+      border-radius: 0.5rem; padding-top: 0.55rem; padding-bottom: 0.55rem;
+    }
+    .text-xs { font-size: 1rem !important; }
+    .timeline { position: relative; padding-left: 2rem; }
+    .timeline::before {
+      content: ''; position: absolute; left: 0.6rem; top: 0.25rem; bottom: 0.25rem;
+      width: 2px; background: rgb(186 230 253);
+    }
+    .timeline-item { position: relative; margin-bottom: 1.75rem; }
+    .timeline-item::before {
+      content: ''; position: absolute; left: -1.65rem; top: 0.35rem;
+      width: 0.75rem; height: 0.75rem; border-radius: 50%;
+      background: rgb(2 132 199); border: 3px solid rgb(224 242 254);
+    }
+    .page-section { display: none; }
+    .page-section.active { display: block; }
+    #sidebar-backdrop { display: none; }
+    #sidebar-backdrop.open { display: block; }
+    @media (max-width: 1023px) {
+      #sidebar { transform: translateX(-100%); transition: transform 0.2s ease; position: fixed; top: 0; left: 0; z-index: 40; height: 100vh; width: 80vw; max-width: 320px; }
+      #sidebar.open { transform: translateX(0); }
+    }
+  </style>
+  <title>의류 수거 서비스 앱/웹 개발 (Flutterflow + Supabase) — 프로젝트 제안서</title>
+</head>
+<body class="text-slate-800 font-sans antialiased">
+  <div class="mx-auto max-w-7xl px-4 py-6 md:px-8 md:py-10">
+
+    <header class="mb-6 rounded-2xl border border-slate-200/70 bg-white/85 px-5 py-3 shadow-soft backdrop-blur">
+      <div class="flex flex-wrap items-center gap-3">
+        <button id="sidebar-toggle" class="lg:hidden inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-3 py-1 text-sm font-medium text-slate-700 hover:border-sky-300 hover:text-sky-700">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+          메뉴
+        </button>
+        <a href="#home" class="inline-flex items-center shrink-0 text-sm font-bold tracking-tight text-slate-800">
+          프로젝트 제안서
+        </a>
+        <div class="hidden sm:block ml-auto text-right">
+          <p class="text-sm font-semibold tracking-[0.04em] text-sky-700/90">의류 수거 서비스 앱/웹 (Flutterflow + Supabase)</p>
+          <p class="text-xs text-slate-400">프로젝트 제안서</p>
+        </div>
+      </div>
+    </header>
+
+    <div class="grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
+
+      <div id="sidebar-backdrop" class="fixed inset-0 bg-black/30 z-30 lg:hidden" onclick="closeSidebar()"></div>
+      <aside id="sidebar" class="rounded-2xl border border-slate-200/70 bg-white/90 p-4 shadow-soft backdrop-blur lg:sticky lg:top-6 lg:h-[calc(100vh-4rem)] lg:overflow-auto">
+        <nav id="nav" class="space-y-1">
+          <a href="#home" data-page="home" class="nav-link block rounded-xl border px-3 py-2 text-sm border-sky-200 bg-sky-50 font-medium text-sky-700">홈</a>
+          <div class="my-3 border-t border-slate-200"></div>
+          <p class="mb-2 mt-1 px-1 text-sm font-semibold tracking-[0.14em] text-slate-400">제안서</p>
+          <a href="#overview" data-page="overview" class="nav-link block rounded-xl border border-transparent px-3 py-2 text-sm text-slate-600 hover:border-slate-200 hover:bg-slate-50 hover:text-slate-900">프로젝트 소개</a>
+          <a href="#estimate" data-page="estimate" class="nav-link block rounded-xl border border-transparent px-3 py-2 text-sm text-slate-600 hover:border-slate-200 hover:bg-slate-50 hover:text-slate-900">견적서</a>
+          <a href="#manday" data-page="manday" class="nav-link block rounded-xl border border-transparent px-3 py-2 text-sm text-slate-600 hover:border-slate-200 hover:bg-slate-50 hover:text-slate-900">공수계산서</a>
+          <a href="#prd" data-page="prd" class="nav-link block rounded-xl border border-transparent px-3 py-2 text-sm text-slate-600 hover:border-slate-200 hover:bg-slate-50 hover:text-slate-900">PRD</a>
+          <div class="my-3 border-t border-slate-200"></div>
+          <p class="mb-2 mt-1 px-1 text-sm font-semibold tracking-[0.14em] text-slate-400">일정 & 경험</p>
+          <a href="#timeline" data-page="timeline" class="nav-link block rounded-xl border border-transparent px-3 py-2 text-sm text-slate-600 hover:border-slate-200 hover:bg-slate-50 hover:text-slate-900">일정 제안</a>
+          <a href="#portfolio" data-page="portfolio" class="nav-link block rounded-xl border border-transparent px-3 py-2 text-sm text-slate-600 hover:border-slate-200 hover:bg-slate-50 hover:text-slate-900">유사 프로젝트 경험</a>
+        </nav>
+      </aside>
+
+      <main class="min-w-0">
+
+        <!-- ─── PAGE: HOME ─── -->
+        <div id="page-home" class="page-section active space-y-6">
+          <div class="rounded-2xl border border-slate-200/70 bg-white/95 p-6 shadow-soft backdrop-blur md:p-8">
+            <p class="mb-2 text-xs font-semibold tracking-[0.2em] text-sky-700/80">프로젝트 제안서</p>
+            <h1 class="text-2xl font-bold tracking-tight text-slate-900 md:text-3xl">의류 수거 서비스 앱/웹 개발 (Flutterflow + Supabase)</h1>
+            <p class="mt-3 max-w-3xl text-sm leading-7 text-slate-600 md:text-base">
+              운영 중인 아임웹 기반 서비스를 Flutterflow + Supabase 통합 플랫폼으로 안전하게 마이그레이션하고, iOS·Android·Web 동시 출시까지 50일 내 완료합니다. Flutter + Supabase 듀얼 백엔드 구축 경험과 3-플랫폼 동시 런칭 경험으로 산출물 완성도를 최우선으로 진행합니다.
+            </p>
+            <div class="mt-4 flex flex-wrap items-center gap-2">
+              <span class="inline-flex rounded-full border border-sky-200 bg-sky-100 px-2.5 py-1 text-sm font-semibold tracking-[0.12em] text-sky-700">9,000,000원 (VAT 별도)</span>
+              <span class="inline-flex rounded-full border border-sky-200 bg-sky-100 px-2.5 py-1 text-sm font-semibold tracking-[0.12em] text-sky-700">50일</span>
+              <span class="inline-flex rounded-full border border-amber-200 bg-amber-100 px-2.5 py-1 text-sm font-semibold tracking-[0.12em] text-amber-700">모바일/웹 (Flutterflow + Supabase)</span>
+              <a href="https://www.wishket.com/project/155122/" target="_blank" rel="noopener noreferrer"
+                 class="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-sm font-medium text-slate-500 transition hover:border-sky-300 hover:text-sky-700">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                원본 공고
+              </a>
+            </div>
+          </div>
+
+          <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <a href="#overview" class="group rounded-2xl border border-slate-200/70 bg-white/90 p-5 shadow-soft transition hover:-translate-y-0.5 hover:border-sky-200 hover:bg-white">
+              <div class="mb-3 inline-flex rounded-full border px-2.5 py-1 text-sm font-semibold tracking-[0.12em] bg-sky-100 text-sky-700 border-sky-200">소개</div>
+              <h2 class="text-lg font-semibold tracking-tight text-slate-900 group-hover:text-sky-700">프로젝트 소개</h2>
+              <p class="mt-2 text-sm leading-7 text-slate-600">프로젝트 분석, 핵심 요구사항 정리, 제안 포인트</p>
+            </a>
+            <a href="#estimate" class="group rounded-2xl border border-slate-200/70 bg-white/90 p-5 shadow-soft transition hover:-translate-y-0.5 hover:border-sky-200 hover:bg-white">
+              <div class="mb-3 inline-flex rounded-full border px-2.5 py-1 text-sm font-semibold tracking-[0.12em] bg-sky-100 text-sky-700 border-sky-200">비용</div>
+              <h2 class="text-lg font-semibold tracking-tight text-slate-900 group-hover:text-sky-700">견적서</h2>
+              <p class="mt-2 text-sm leading-7 text-slate-600">항목별 비용 산출 근거 및 상세 견적</p>
+            </a>
+            <a href="#manday" class="group rounded-2xl border border-slate-200/70 bg-white/90 p-5 shadow-soft transition hover:-translate-y-0.5 hover:border-sky-200 hover:bg-white">
+              <div class="mb-3 inline-flex rounded-full border px-2.5 py-1 text-sm font-semibold tracking-[0.12em] bg-sky-100 text-sky-700 border-sky-200">공수</div>
+              <h2 class="text-lg font-semibold tracking-tight text-slate-900 group-hover:text-sky-700">공수계산서</h2>
+              <p class="mt-2 text-sm leading-7 text-slate-600">기능별 개발 공수(man-day) 산출 내역</p>
+            </a>
+            <a href="#prd" class="group rounded-2xl border border-slate-200/70 bg-white/90 p-5 shadow-soft transition hover:-translate-y-0.5 hover:border-sky-200 hover:bg-white">
+              <div class="mb-3 inline-flex rounded-full border px-2.5 py-1 text-sm font-semibold tracking-[0.12em] bg-amber-100 text-amber-700 border-amber-200">기획</div>
+              <h2 class="text-lg font-semibold tracking-tight text-slate-900 group-hover:text-sky-700">PRD</h2>
+              <p class="mt-2 text-sm leading-7 text-slate-600">기능 요구사항 정의서, 사용자 스토리, 기술 제약</p>
+            </a>
+            <a href="#timeline" class="group rounded-2xl border border-slate-200/70 bg-white/90 p-5 shadow-soft transition hover:-translate-y-0.5 hover:border-sky-200 hover:bg-white">
+              <div class="mb-3 inline-flex rounded-full border px-2.5 py-1 text-sm font-semibold tracking-[0.12em] bg-amber-100 text-amber-700 border-amber-200">일정</div>
+              <h2 class="text-lg font-semibold tracking-tight text-slate-900 group-hover:text-sky-700">일정 제안</h2>
+              <p class="mt-2 text-sm leading-7 text-slate-600">단계별 마일스톤 및 산출물 일정표</p>
+            </a>
+            <a href="#portfolio" class="group rounded-2xl border border-slate-200/70 bg-white/90 p-5 shadow-soft transition hover:-translate-y-0.5 hover:border-sky-200 hover:bg-white">
+              <div class="mb-3 inline-flex rounded-full border px-2.5 py-1 text-sm font-semibold tracking-[0.12em] bg-amber-100 text-amber-700 border-amber-200">경험</div>
+              <h2 class="text-lg font-semibold tracking-tight text-slate-900 group-hover:text-sky-700">유사 프로젝트 경험</h2>
+              <p class="mt-2 text-sm leading-7 text-slate-600">유사 프로젝트 수행 경험 및 기술 스택</p>
+            </a>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4 md:grid-cols-4">
+            <div class="rounded-2xl border border-slate-200/70 bg-white/90 p-4 text-center shadow-soft backdrop-blur">
+              <p class="text-2xl font-bold text-sky-700">50일</p>
+              <p class="mt-1 text-xs text-slate-500">제안 기간</p>
+            </div>
+            <div class="rounded-2xl border border-slate-200/70 bg-white/90 p-4 text-center shadow-soft backdrop-blur">
+              <p class="text-2xl font-bold text-sky-700">3</p>
+              <p class="mt-1 text-xs text-slate-500">동시 출시 플랫폼 (iOS·Android·Web)</p>
+            </div>
+            <div class="rounded-2xl border border-slate-200/70 bg-white/90 p-4 text-center shadow-soft backdrop-blur">
+              <p class="text-2xl font-bold text-sky-700">13+</p>
+              <p class="mt-1 text-xs text-slate-500">유사 프로젝트 경험</p>
+            </div>
+            <div class="rounded-2xl border border-slate-200/70 bg-white/90 p-4 text-center shadow-soft backdrop-blur">
+              <p class="text-2xl font-bold text-sky-700">100%</p>
+              <p class="mt-1 text-xs text-slate-500">기획·디자인·개발 풀스코프 참여율</p>
+            </div>
+          </div>
+
+          <div class="rounded-2xl border border-sky-200/70 bg-gradient-to-br from-sky-50 to-brand-50 p-6 text-center shadow-soft md:p-10">
+            <h2 class="text-xl font-bold tracking-tight text-slate-900 md:text-2xl">함께 만들어 가겠습니다</h2>
+            <p class="mx-auto mt-3 max-w-lg text-sm leading-7 text-slate-600">각 메뉴를 클릭하시면 상세 내용을 확인하실 수 있습니다.</p>
+          </div>
+        </div>
+
+        <!-- ─── PAGE: OVERVIEW ─── -->
+        <div id="page-overview" class="page-section space-y-6">
+          <div class="rounded-2xl border border-slate-200/70 bg-white/95 p-5 shadow-soft backdrop-blur md:p-8">
+            <article class="doc-content">
+              <h1>프로젝트 소개</h1>
+              <blockquote>운영 중인 아임웹 기반 픽옷 서비스를 Flutterflow + Supabase 독립 플랫폼으로 마이그레이션하고, iOS·Android·Web 동시 출시 + 쇼핑몰 신규 기능까지 50일 내 완료합니다.</blockquote>
+
+              <h2>프로젝트 개요</h2>
+              <table>
+                <tr><th>항목</th><th>내용</th></tr>
+                <tr><td>프로젝트명</td><td><a href="https://www.wishket.com/project/155122/" target="_blank" rel="noopener noreferrer" class="text-sky-700 underline decoration-sky-300 hover:decoration-sky-500">의류 수거 서비스 앱/웹 개발 (Flutterflow + Supabase)</a></td></tr>
+                <tr><td>카테고리</td><td>모바일/웹 (Flutterflow + Supabase) · IT 서비스 구축 · 운영 중 서비스 리뉴얼</td></tr>
+                <tr><td>제안 금액</td><td>9,000,000원 (VAT 별도)</td></tr>
+                <tr><td>제안 기간</td><td>50일 (2026-05-18 ~ 2026-07-06)</td></tr>
+                <tr><td>핵심 기술</td><td>Flutterflow, Supabase, 토스페이먼츠, 카카오 알림톡, Strapi 연동</td></tr>
+              </table>
+
+              <h2>현황 분석</h2>
+              <ul>
+                <li><strong>현재 운영</strong>: 아임웹 호스팅 기반 픽옷(pickot.kr) — 비대면 의류 수거 + 픽포인트 적립 + 픽옷스토어(쇼핑몰) 운영 중</li>
+                <li><strong>이슈</strong>: 아임웹 오류 빈도 ↑, 모바일 앱 부재로 사용자 경험 한계</li>
+                <li><strong>준비 상태</strong>: Figma UI/UX 및 기능 명세 준비 완료, 협업 어드민 개발자 1명 (적극 협조 어려움)</li>
+                <li><strong>참고 서비스</strong>: 리클(모바일 앱 + Refty 쇼핑), 뉴오프(중고 의류 마켓 + 내옷팔기) — 모바일 앱 + 쇼핑 통합 모델 표준</li>
+                <li><strong>마이그레이션 대상</strong>: 회원 데이터, 수거 신청 이력, 포인트 잔액, 주문 내역 (가능 시)</li>
+              </ul>
+
+              <h2>핵심 요구사항 분석</h2>
+              <ul>
+                <li><strong>인증</strong>: 이메일 + 카카오 소셜 로그인 (Supabase Auth + 카카오 OAuth Provider 또는 Edge Function 토큰 교환)</li>
+                <li><strong>수거 신청 폼</strong>: 날짜·시간·주소·품목·메모 — 주소 검색(다음/카카오 주소 API), 캘린더 + 시간 슬롯 UI, 사진 업로드(Supabase Storage)</li>
+                <li><strong>상태 추적</strong>: 접수 → 수거중 → 완료 등 상태 트랜지션 + 실시간 업데이트(Supabase Realtime) + 알림톡 자동 발송</li>
+                <li><strong>마이페이지</strong>: 신청 히스토리, 픽포인트 내역, 주문 내역, 회원정보 수정</li>
+                <li><strong>관리자 페이지</strong>: 기존 Strapi 활용 또는 Supabase 기반 별도 어드민 (미팅 시 협의)</li>
+                <li><strong>알림톡 연동</strong>: 블룸 AI 채널을 통해 카카오 알림톡 자동 발송 (상태 변경 시 트리거)</li>
+                <li><strong>쇼핑몰</strong>: 카테고리/상품/장바구니/주문/결제(토스페이먼츠) — 픽옷스토어 6종 카테고리 구조 반영</li>
+                <li><strong>데이터 마이그레이션</strong>: 아임웹 → Supabase 회원·주문·포인트 이관 (스키마 매핑 + 검증 스크립트)</li>
+              </ul>
+
+              <h2>제안 포인트</h2>
+              <p><strong>1. Flutter + Supabase 듀얼 백엔드 구축 직접 경험</strong> — Flutter 17K LOC 단일 코드베이스로 iOS+Android 45+ 화면을 Firebase + Supabase 듀얼 스택으로 직접 구현한 경험이 있어, Flutterflow가 생성하는 Flutter 코드 베이스 위에서 Supabase Auth/RLS/Realtime/Edge Functions를 안정적으로 통합 가능합니다.</p>
+
+              <p><strong>2. 멀티플랫폼 동시 출시 검증된 패턴</strong> — 동일 코드베이스로 iOS·Android·반응형 웹 3 플랫폼을 4개월 내 동시 출시한 프랜차이즈 관리 앱 경험으로, Flutterflow의 멀티플랫폼 빌드 파이프라인과 스토어 심사 일정을 50일 내 완료할 수 있도록 일정을 설계합니다.</p>
+
+              <p><strong>3. 결제 + 예약/신청 + 알림 통합 운영 경험</strong> — 수업 예약·결제·CRM·자동 알림이 결합된 B2C 플랫폼을 풀스코프(기획·디자인·개발)로 출시한 경험으로, 토스페이먼츠 연동·수거 슬롯 예약·카카오 알림톡 트리거를 단일한 상태 머신 기반으로 설계합니다.</p>
+
+              <p><strong>4. 포인트/리워드 이코노미 직접 설계 경험</strong> — 7단계 루트박스 + 듀얼 토큰 이코노미를 갖춘 게이미피케이션 앱을 자체 기획·개발한 경험으로, 픽포인트(수거 적립 → 스토어 차감) 트랜잭션 정합성을 보장하는 Supabase 기반 이중 검증 구조를 설계합니다.</p>
+
+              <p><strong>5. 산출물 완성도 우선 운영</strong> — 클라이언트 1순위 우선순위인 산출물 완성도에 맞춰, 마이그레이션 검증 스크립트 + 통합 QA + 1개월 무상 하자 보수 + 인수인계 문서까지 포함하여 안정적인 컷오버를 보장합니다.</p>
+
+              <h2>사용 기술 및 툴</h2>
+              <h3>개발 기술</h3>
+              <div class="flex flex-wrap gap-2 not-prose mb-4">
+                <span class="rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-sm font-medium text-sky-700">Flutterflow</span>
+                <span class="rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-sm font-medium text-sky-700">Flutter / Dart</span>
+                <span class="rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-sm font-medium text-sky-700">Supabase (Auth · DB · Storage · Realtime · Edge Functions)</span>
+                <span class="rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-sm font-medium text-sky-700">PostgreSQL + RLS</span>
+                <span class="rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-sm font-medium text-sky-700">토스페이먼츠 SDK</span>
+                <span class="rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-sm font-medium text-sky-700">카카오 알림톡 (블룸 AI)</span>
+                <span class="rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-sm font-medium text-sky-700">카카오 OAuth</span>
+                <span class="rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-sm font-medium text-sky-700">Strapi 연동</span>
+                <span class="rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-sm font-medium text-sky-700">카카오 주소 API</span>
+                <span class="rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-sm font-medium text-sky-700">Figma</span>
+              </div>
+              <h3>협업 및 커뮤니케이션</h3>
+              <div class="flex flex-wrap gap-2 not-prose">
+                <span class="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-sm font-medium text-amber-700">Slack / 카카오톡</span>
+                <span class="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-sm font-medium text-amber-700">Zoom / Google Meet</span>
+                <span class="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-sm font-medium text-amber-700">Notion / Google Docs</span>
+                <span class="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-sm font-medium text-amber-700">GitHub Issues</span>
+                <span class="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-sm font-medium text-amber-700">Figma 코멘트</span>
+              </div>
+            </article>
+          </div>
+        </div>
+
+        <!-- ─── PAGE: ESTIMATE ─── -->
+        <div id="page-estimate" class="page-section space-y-6">
+          <div class="rounded-2xl border border-slate-200/70 bg-white/95 p-5 shadow-soft backdrop-blur md:p-8">
+            <article class="doc-content">
+              <h1>견적서</h1>
+              <blockquote>본 견적서는 픽옷(pickot.kr) 서비스 마이그레이션 및 신규 모바일/웹 앱 구축 요구사항 분석을 기반으로 산출되었습니다.</blockquote>
+
+              <h2>견적 요약</h2>
+              <table>
+                <tr><th>항목</th><th>내용</th></tr>
+                <tr><td>프로젝트명</td><td>의류 수거 서비스 앱/웹 개발 (Flutterflow + Supabase)</td></tr>
+                <tr><td>제안 금액</td><td><strong>9,000,000원 (VAT 별도)</strong></td></tr>
+                <tr><td>제안 기간</td><td>50일</td></tr>
+                <tr><td>견적 유효기간</td><td>제안일로부터 30일</td></tr>
+              </table>
+
+              <h2>상세 견적 내역</h2>
+              <table>
+                <thead>
+                  <tr><th>구분</th><th>항목</th><th>수량</th><th>단가</th><th>금액</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td>기획/설계</td><td>요구사항 분석, ERD 설계, API 명세, 마이그레이션 플랜</td><td>1식</td><td>-</td><td>600,000원</td></tr>
+                  <tr><td>디자인</td><td>Figma 검토 및 누락 화면 보완 (쇼핑몰·관리자 등)</td><td>1식</td><td>-</td><td>300,000원</td></tr>
+                  <tr><td>프론트엔드</td><td>Flutterflow 기반 iOS/Android/Web 구현 — 인증·수거 신청·내역·마이페이지·쇼핑몰·알림</td><td>1식</td><td>-</td><td>4,200,000원</td></tr>
+                  <tr><td>백엔드</td><td>Supabase DB/RLS, Edge Functions, 토스페이먼츠, 알림톡 연동</td><td>1식</td><td>-</td><td>2,900,000원</td></tr>
+                  <tr><td>어드민 연동</td><td>기존 Strapi 데이터 연동 또는 Supabase 어드민 구축</td><td>1식</td><td>-</td><td>500,000원</td></tr>
+                  <tr><td>데이터 마이그레이션</td><td>아임웹 → Supabase 회원·주문·포인트 이관 + 검증 스크립트</td><td>1식</td><td>-</td><td>200,000원</td></tr>
+                  <tr><td>QA/배포</td><td>iOS/Android 스토어 등록, 웹 배포, 통합 테스트, 컷오버</td><td>1식</td><td>-</td><td>300,000원</td></tr>
+                </tbody>
+                <tfoot>
+                  <tr><th colspan="4">합계 (VAT 별도)</th><th>9,000,000원</th></tr>
+                </tfoot>
+              </table>
+
+              <h2>산정 근거</h2>
+              <ul>
+                <li>유사 모바일 + 결제 + 데이터 마이그레이션 프로젝트 수행 경험 기반 항목별 공수 산출</li>
+                <li>Flutterflow 멀티플랫폼 빌드 특성 반영 (단일 코드베이스 → iOS/Android/Web 동시 산출)</li>
+                <li>운영 중 서비스 리뉴얼 특성상 데이터 정합성·컷오버 검증 공수 별도 반영</li>
+                <li>Figma 준비 완료 → 디자인 공수 최소화 (검토 + 누락 화면 보완만)</li>
+                <li>버퍼 10~15% 포함하여 일정 리스크 대응</li>
+              </ul>
+
+              <h2>포함 사항</h2>
+              <ul>
+                <li>소스 코드 원본 일체 (Flutterflow 프로젝트 + Supabase 스키마/RLS/Edge Functions)</li>
+                <li>개발 문서 (API 명세서, DB ERD, RLS 정책, 마이그레이션 플랜, 배포 가이드)</li>
+                <li>iOS/Android 앱 스토어 등록 지원 (1회)</li>
+                <li>아임웹 → Supabase 데이터 마이그레이션 1회 실행 + 검증</li>
+                <li>1개월 무상 하자 보수 (출시 후)</li>
+                <li>배포 환경 세팅 1회 (Supabase 프로젝트, Vercel/Netlify 웹, Apple/Google Play Console)</li>
+              </ul>
+
+              <h2>불포함 사항</h2>
+              <ul>
+                <li>Supabase Pro 플랜 등 운영 호스팅 비용</li>
+                <li>도메인 구매 및 DNS 변경 비용</li>
+                <li>토스페이먼츠 PG 가맹비 / 카카오 알림톡 발송 비용 / 카카오 비즈니스 채널 비용</li>
+                <li>Apple Developer / Google Play Console 연간 비용</li>
+                <li>하자 보수 기간 이후 유지보수 (월 단위 별도 계약 협의 가능)</li>
+                <li>Strapi 신규 기능 개발 (협업 개발자 영역)</li>
+              </ul>
+            </article>
+          </div>
+        </div>
+
+        <!-- ─── PAGE: MANDAY ─── -->
+        <div id="page-manday" class="page-section space-y-6">
+          <div class="rounded-2xl border border-slate-200/70 bg-white/95 p-5 shadow-soft backdrop-blur md:p-8">
+            <article class="doc-content">
+              <h1>공수계산서</h1>
+              <blockquote>기능별 개발 공수(Man-Day)를 산출하여 일정과 비용의 근거를 제시합니다.</blockquote>
+
+              <h2>공수 요약</h2>
+              <table>
+                <tr><th>구분</th><th>공수 (M/D)</th><th>비율</th></tr>
+                <tr><td>기획/설계</td><td>4 M/D</td><td>11%</td></tr>
+                <tr><td>디자인 검토/보완</td><td>2 M/D</td><td>6%</td></tr>
+                <tr><td>프론트엔드 (Flutterflow)</td><td>14 M/D</td><td>39%</td></tr>
+                <tr><td>백엔드 (Supabase)</td><td>11 M/D</td><td>30%</td></tr>
+                <tr><td>QA/배포/마이그레이션 컷오버</td><td>5 M/D</td><td>14%</td></tr>
+                <tr><th>합계</th><th>36 M/D</th><th>100%</th></tr>
+              </table>
+
+              <h2>기능별 상세 공수</h2>
+              <table>
+                <thead>
+                  <tr><th>기능</th><th>세부 작업</th><th>담당</th><th>공수 (M/D)</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td rowspan="3">기획/설계</td><td>요구사항 정리 + 사용자 시나리오 + 상태 머신 정의</td><td>기획</td><td>1.5</td></tr>
+                  <tr><td>ERD + RLS 정책 설계 (회원·수거·포인트·상품·주문)</td><td>설계</td><td>1.5</td></tr>
+                  <tr><td>마이그레이션 매핑 + API 명세서 작성</td><td>설계</td><td>1</td></tr>
+                  <tr><td>디자인</td><td>Figma 검토 + 쇼핑몰·관리자 누락 화면 보완</td><td>디자인</td><td>2</td></tr>
+                  <tr><td rowspan="2">인증</td><td>이메일 + 카카오 OAuth 로그인 (Supabase Auth)</td><td>FE+BE</td><td>1.5</td></tr>
+                  <tr><td>회원가입 + 약관 동의 + 회원정보 수정</td><td>FE</td><td>1</td></tr>
+                  <tr><td rowspan="2">수거 신청</td><td>날짜/시간/주소/품목/메모 폼 + 주소 검색 + 사진 업로드</td><td>FE</td><td>2</td></tr>
+                  <tr><td>슬롯 예약 + 중복 방지 로직</td><td>BE</td><td>1</td></tr>
+                  <tr><td rowspan="2">상태 추적</td><td>신청 내역 리스트 + 상세 화면 + Realtime 구독</td><td>FE</td><td>1.5</td></tr>
+                  <tr><td>상태 트랜지션 트리거 + 알림톡 발송 Edge Function</td><td>BE</td><td>1.5</td></tr>
+                  <tr><td>마이페이지</td><td>신청 히스토리 · 포인트 내역 · 주문 내역 통합 화면</td><td>FE</td><td>1.5</td></tr>
+                  <tr><td rowspan="3">쇼핑몰</td><td>카테고리·상품 목록·상세 + 검색/필터</td><td>FE</td><td>2</td></tr>
+                  <tr><td>장바구니 + 주문서 + 결제(토스페이먼츠)</td><td>FE+BE</td><td>3</td></tr>
+                  <tr><td>주문 상태 + 환불/취소 처리</td><td>BE</td><td>1.5</td></tr>
+                  <tr><td>포인트 시스템</td><td>적립/차감 트랜잭션 + 정합성 검증 + 만료 정책</td><td>BE</td><td>1.5</td></tr>
+                  <tr><td>관리자 연동</td><td>기존 Strapi 데이터 연결 또는 Supabase 어드민 뷰</td><td>BE</td><td>2</td></tr>
+                  <tr><td>알림톡</td><td>블룸 AI 채널 트리거 + 템플릿 매핑 (회원/수거/주문)</td><td>BE</td><td>1</td></tr>
+                  <tr><td>데이터 마이그레이션</td><td>아임웹 → Supabase ETL 스크립트 + 검증</td><td>BE</td><td>2</td></tr>
+                  <tr><td rowspan="3">QA/배포</td><td>통합 시나리오 QA + 회귀 테스트</td><td>QA</td><td>2</td></tr>
+                  <tr><td>iOS/Android 스토어 등록 + 심사 대응</td><td>배포</td><td>2</td></tr>
+                  <tr><td>웹 배포 + 컷오버 + 인수인계 문서</td><td>배포</td><td>1</td></tr>
+                </tbody>
+              </table>
+
+              <h2>산정 기준</h2>
+              <ul>
+                <li>1 M/D = 8시간 기준 (1인 1일 작업량)</li>
+                <li>주 5일 근무 기준 (달력 50일 ≒ 36 M/D)</li>
+                <li>버퍼 10~15% 포함</li>
+                <li>유사 프로젝트 수행 경험 기반 효율적 개발</li>
+                <li>모바일 앱·결제·마이그레이션 특성 반영 추가 버퍼 적용</li>
+              </ul>
+            </article>
+          </div>
+        </div>
+
+        <!-- ─── PAGE: PRD ─── -->
+        <div id="page-prd" class="page-section space-y-6">
+          <div class="rounded-2xl border border-slate-200/70 bg-white/95 p-5 shadow-soft backdrop-blur md:p-8">
+            <article class="doc-content">
+              <h1>PRD (Product Requirements Document)</h1>
+              <blockquote>의류 수거 서비스 앱/웹 신규 구축의 기능 요구사항을 정의합니다.</blockquote>
+
+              <h2>1. 프로젝트 배경 및 목적</h2>
+              <p>현재 아임웹 기반으로 운영 중인 픽옷(pickot.kr) 서비스는 호스팅 안정성 이슈와 모바일 앱 부재로 사용자 경험에 한계가 있습니다. 본 프로젝트는 다음을 목표로 합니다.</p>
+              <ul>
+                <li>아임웹 → Flutterflow + Supabase 독립 플랫폼 마이그레이션으로 안정성 확보</li>
+                <li>iOS·Android 네이티브 앱 + 반응형 웹 동시 출시로 모바일 사용자 경험 개선</li>
+                <li>수거 신청·상태 추적·포인트·쇼핑몰을 단일 플랫폼에 통합하여 운영 효율화</li>
+                <li>기존 회원·주문·포인트 데이터를 무손실 이관하여 사용자 영향 최소화</li>
+              </ul>
+
+              <h2>2. 사용자 정의</h2>
+              <table>
+                <thead>
+                  <tr><th>사용자 유형</th><th>설명</th><th>주요 기능</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td>일반 회원</td><td>의류 수거를 신청하고 픽포인트를 적립·사용하는 최종 사용자</td><td>회원가입/로그인, 수거 신청, 상태 추적, 마이페이지, 쇼핑몰 구매</td></tr>
+                  <tr><td>운영 관리자</td><td>신청 접수 및 상태 변경, 주문 처리, 포인트 정책 관리</td><td>신청 목록 조회, 상태 변경, 주문 관리, 알림톡 발송 모니터링 (Strapi 또는 Supabase 어드민)</td></tr>
+                  <tr><td>비회원 (랜딩)</td><td>서비스 소개 페이지 방문자</td><td>서비스 소개, 이용방법, FAQ, 회원가입 유도</td></tr>
+                </tbody>
+              </table>
+
+              <h2>3. 기능 요구사항</h2>
+
+              <h3>3.1 인증</h3>
+              <ul>
+                <li><strong>[필수]</strong> 이메일/비밀번호 회원가입 + 로그인</li>
+                <li><strong>[필수]</strong> 카카오 소셜 로그인</li>
+                <li><strong>[필수]</strong> 비밀번호 재설정 (이메일)</li>
+                <li><strong>[필수]</strong> 회원 탈퇴 + 개인정보 삭제 처리</li>
+                <li><strong>[필수]</strong> 약관·개인정보 동의 (마케팅 수신 동의 포함)</li>
+              </ul>
+
+              <h3>3.2 수거 신청</h3>
+              <ul>
+                <li><strong>[필수]</strong> 수거 희망 날짜·시간 슬롯 선택 (캘린더 + 시간대 픽커)</li>
+                <li><strong>[필수]</strong> 주소 입력 (카카오 주소 검색 API + 상세 주소)</li>
+                <li><strong>[필수]</strong> 품목 선택 (의류 카테고리·수량·예상 무게)</li>
+                <li><strong>[필수]</strong> 메모 / 사진 업로드 (Supabase Storage)</li>
+                <li><strong>[필수]</strong> 신청 완료 시 알림톡 발송</li>
+                <li><strong>[선택]</strong> 정기 수거 신청 (반복 일정)</li>
+              </ul>
+
+              <h3>3.3 상태 추적</h3>
+              <ul>
+                <li><strong>[필수]</strong> 신청 상태: 접수 → 수거 예정 → 수거중 → 검수 → 완료 (또는 취소)</li>
+                <li><strong>[필수]</strong> 상태 변경 시 카카오 알림톡 자동 발송 (블룸 AI 채널)</li>
+                <li><strong>[필수]</strong> 실시간 상태 업데이트 (Supabase Realtime 구독)</li>
+                <li><strong>[필수]</strong> 신청 취소/일정 변경 (정책에 따른 차단 조건 포함)</li>
+              </ul>
+
+              <h3>3.4 마이페이지 / 포인트</h3>
+              <ul>
+                <li><strong>[필수]</strong> 신청 히스토리 (필터·정렬)</li>
+                <li><strong>[필수]</strong> 픽포인트 잔액 + 적립/사용 내역</li>
+                <li><strong>[필수]</strong> 주문 내역 + 배송 상태</li>
+                <li><strong>[필수]</strong> 회원정보 수정 + 알림 설정</li>
+              </ul>
+
+              <h3>3.5 쇼핑몰</h3>
+              <ul>
+                <li><strong>[필수]</strong> 카테고리/상품 목록 (식품·생활용품·패션·ECO·업사이클·뷰티)</li>
+                <li><strong>[필수]</strong> 상품 상세 + 옵션 선택</li>
+                <li><strong>[필수]</strong> 장바구니 + 주문서</li>
+                <li><strong>[필수]</strong> 토스페이먼츠 결제 (카드·간편결제·계좌이체) + 픽포인트 차감</li>
+                <li><strong>[필수]</strong> 주문 취소 / 환불 처리</li>
+                <li><strong>[선택]</strong> 타임세일 / 품절 배지 / 검색</li>
+              </ul>
+
+              <h3>3.6 관리자</h3>
+              <ul>
+                <li><strong>[필수]</strong> 신청 목록 조회 + 상태 변경 (기존 Strapi 활용 또는 Supabase 어드민 뷰)</li>
+                <li><strong>[필수]</strong> 주문 처리 + 환불 승인</li>
+                <li><strong>[선택]</strong> 포인트 정책 / 상품 / 회원 관리 (기존 Strapi 영역과 분담 협의)</li>
+              </ul>
+
+              <h3>3.7 데이터 마이그레이션</h3>
+              <ul>
+                <li><strong>[필수]</strong> 아임웹 → Supabase 회원 데이터 이관 (이메일·연락처·주소·약관 동의 이력)</li>
+                <li><strong>[필수]</strong> 픽포인트 잔액 이관 + 정합성 검증</li>
+                <li><strong>[선택]</strong> 과거 수거 신청 / 주문 이력 이관 (가능 범위 내)</li>
+                <li><strong>[필수]</strong> 컷오버 시 사용자 비밀번호 재설정 안내 또는 1회용 토큰 발급</li>
+              </ul>
+
+              <h2>4. 비기능 요구사항</h2>
+              <table>
+                <thead>
+                  <tr><th>항목</th><th>요구사항</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td>플랫폼</td><td>iOS, Android, 반응형 웹 동시 지원 (Flutterflow 단일 코드베이스)</td></tr>
+                  <tr><td>성능</td><td>주요 화면 첫 진입 3초 이내, API 응답 시간 평균 500ms 이내</td></tr>
+                  <tr><td>보안</td><td>HTTPS, Supabase RLS 기반 행 단위 권한, 토스페이먼츠 PCI-DSS, 카카오 OAuth, 개인정보 암호화</td></tr>
+                  <tr><td>가용성</td><td>Supabase Pro 가용성 기준 (99.9% 권장)</td></tr>
+                  <tr><td>국제화</td><td>한국어 우선, 다국어 확장 가능한 구조</td></tr>
+                  <tr><td>접근성</td><td>WCAG AA 수준 색상 대비, 폰트 12pt 이상</td></tr>
+                  <tr><td>SEO</td><td>웹 빌드 메타태그·OG 태그 기본 적용</td></tr>
+                </tbody>
+              </table>
+
+              <h2>5. 기술 제약사항</h2>
+              <ul>
+                <li>Flutterflow 라이선스(Pro 이상) 필요 — 코드 익스포트 권한 확보 전제</li>
+                <li>Supabase Pro 플랜 권장 (Realtime · Storage · 일일 백업)</li>
+                <li>iOS 16+, Android 7.0+ (Flutterflow 기본 지원 범위)</li>
+                <li>카카오 비즈니스 채널 + 토스페이먼츠 가맹점 등록 사전 완료 필요</li>
+                <li>기존 어드민(Strapi)은 협업 개발자 1명이 유지 — 본 범위에서는 데이터 연동 위주, 신규 기능은 협업 개발자 영역</li>
+              </ul>
+
+              <h2>6. 범위 외 사항 (Out of Scope)</h2>
+              <ul>
+                <li>Strapi 어드민 신규 기능 개발</li>
+                <li>물류/배송 자동화(배송사 API 연동)</li>
+                <li>구독·정기결제 시스템 (1차 출시 후 협의)</li>
+                <li>사진 기반 자동 검수(AI 비전 모델) — 향후 확장 영역</li>
+                <li>관리자 권한별 다단계 결재 / 회계 통합</li>
+              </ul>
+            </article>
+          </div>
+        </div>
+
+        <!-- ─── PAGE: TIMELINE ─── -->
+        <div id="page-timeline" class="page-section space-y-6">
+          <div class="rounded-2xl border border-slate-200/70 bg-white/95 p-5 shadow-soft backdrop-blur md:p-8">
+            <article class="doc-content">
+              <h1>일정 제안</h1>
+              <blockquote>총 50일 (2026-05-18 ~ 2026-07-06) 기준 4단계 마일스톤으로 진행합니다.</blockquote>
+
+              <h2>전체 일정 요약</h2>
+              <table>
+                <thead>
+                  <tr><th>단계</th><th>기간</th><th>주요 산출물</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td>Phase 1: 기획·설계 + 마이그레이션 플랜</td><td>Day 1–10 (약 1.5주)</td><td>요구사항 정의서, ERD, RLS 정책, API 명세서, 마이그레이션 매핑 문서</td></tr>
+                  <tr><td>Phase 2: 핵심 기능 개발 (인증·수거·상태 추적)</td><td>Day 11–25 (약 2주)</td><td>회원가입~수거 신청~상태 추적 데모, Supabase RLS 적용, 알림톡 트리거</td></tr>
+                  <tr><td>Phase 3: 쇼핑몰·결제·마이그레이션</td><td>Day 26–40 (약 2주)</td><td>쇼핑몰 + 토스페이먼츠 데모, 데이터 마이그레이션 검증, Strapi 연동</td></tr>
+                  <tr><td>Phase 4: 통합 QA + 스토어 배포 + 컷오버</td><td>Day 41–50 (약 1.5주)</td><td>통합 테스트 리포트, iOS/Android 스토어 등록, 웹 배포, 인수인계 문서</td></tr>
+                </tbody>
+              </table>
+            </article>
+          </div>
+
+          <div class="rounded-2xl border border-slate-200/70 bg-white/95 p-5 shadow-soft backdrop-blur md:p-8">
+            <h2 class="mb-4 text-sm font-semibold tracking-[0.14em] text-slate-500">상세 타임라인</h2>
+            <div class="timeline">
+              <div class="timeline-item">
+                <p class="text-sm font-semibold tracking-[0.14em] text-sky-700">PHASE 1</p>
+                <h4 class="text-base font-semibold text-slate-900">기획·설계 + 마이그레이션 플랜</h4>
+                <p class="mb-1 text-xs font-semibold text-amber-600">Day 1–10</p>
+                <p class="text-sm leading-7 text-slate-600">요구사항 확정, Figma 검토, ERD 및 RLS 정책 설계, API 명세, 아임웹 → Supabase 마이그레이션 매핑 작성</p>
+                <ul class="mt-2 list-disc pl-5 text-sm text-slate-500">
+                  <li>킥오프 미팅 + Figma·기능 명세 리뷰</li>
+                  <li>ERD 설계 (회원·수거·포인트·상품·주문 5개 도메인)</li>
+                  <li>Supabase RLS 정책 + Edge Function 설계</li>
+                  <li>아임웹 데이터 추출·매핑 테이블 작성</li>
+                  <li>산출물: 요구사항 정의서, ERD, RLS 정책, API 명세서, 마이그레이션 플랜</li>
+                </ul>
+              </div>
+              <div class="timeline-item">
+                <p class="text-sm font-semibold tracking-[0.14em] text-sky-700">PHASE 2</p>
+                <h4 class="text-base font-semibold text-slate-900">핵심 기능 개발 (인증·수거·상태 추적)</h4>
+                <p class="mb-1 text-xs font-semibold text-amber-600">Day 11–25</p>
+                <p class="text-sm leading-7 text-slate-600">Supabase 인증·DB 구축, Flutterflow 화면 구현, 카카오 알림톡 트리거 연동, 핵심 사용자 플로우 데모</p>
+                <ul class="mt-2 list-disc pl-5 text-sm text-slate-500">
+                  <li>이메일·카카오 OAuth 로그인 + 회원가입 플로우</li>
+                  <li>수거 신청 폼 (날짜·시간·주소·품목·메모·사진)</li>
+                  <li>신청 내역 + 상태 추적 화면 (Realtime 구독)</li>
+                  <li>마이페이지 + 회원정보 수정</li>
+                  <li>알림톡 Edge Function (블룸 AI 채널 연동)</li>
+                  <li>산출물: 회원가입~수거 신청~상태 추적 데모 빌드</li>
+                </ul>
+              </div>
+              <div class="timeline-item">
+                <p class="text-sm font-semibold tracking-[0.14em] text-sky-700">PHASE 3</p>
+                <h4 class="text-base font-semibold text-slate-900">쇼핑몰·결제·데이터 마이그레이션</h4>
+                <p class="mb-1 text-xs font-semibold text-amber-600">Day 26–40</p>
+                <p class="text-sm leading-7 text-slate-600">쇼핑몰 + 토스페이먼츠 결제 + 포인트 시스템 연동, 기존 데이터 마이그레이션 + Strapi 어드민 연동</p>
+                <ul class="mt-2 list-disc pl-5 text-sm text-slate-500">
+                  <li>카테고리·상품 목록·상세 + 검색/필터</li>
+                  <li>장바구니·주문서·토스페이먼츠 결제 + 픽포인트 차감</li>
+                  <li>주문 취소·환불 처리</li>
+                  <li>아임웹 → Supabase ETL 실행 + 검증</li>
+                  <li>Strapi 어드민 연동 (또는 Supabase 어드민 뷰)</li>
+                  <li>산출물: 쇼핑몰 데모 빌드, 마이그레이션 검증 리포트</li>
+                </ul>
+              </div>
+              <div class="timeline-item">
+                <p class="text-sm font-semibold tracking-[0.14em] text-sky-700">PHASE 4</p>
+                <h4 class="text-base font-semibold text-slate-900">통합 QA + 스토어 배포 + 컷오버</h4>
+                <p class="mb-1 text-xs font-semibold text-amber-600">Day 41–50</p>
+                <p class="text-sm leading-7 text-slate-600">통합 시나리오 테스트, iOS/Android 스토어 등록·심사 대응, 웹 배포, 도메인 컷오버 + 인수인계</p>
+                <ul class="mt-2 list-disc pl-5 text-sm text-slate-500">
+                  <li>통합 시나리오 QA + 회귀 테스트</li>
+                  <li>iOS App Store / Google Play 심사 제출</li>
+                  <li>웹 배포 (Vercel 또는 Netlify) + 도메인 연결</li>
+                  <li>최종 데이터 컷오버 + 알림톡 일괄 안내</li>
+                  <li>운영 가이드·인수인계 문서 전달</li>
+                  <li>산출물: 출시 빌드 (iOS/Android/Web), 인수인계 문서, QA 리포트</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div class="rounded-2xl border border-slate-200/70 bg-white/95 p-5 shadow-soft backdrop-blur md:p-8">
+            <article class="doc-content">
+              <h2>마일스톤 체크포인트</h2>
+              <table>
+                <thead>
+                  <tr><th>마일스톤</th><th>시점</th><th>검수 기준</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td>M1: 설계 완료</td><td>Day 10</td><td>ERD · RLS 정책 · API 명세 · 마이그레이션 플랜 승인</td></tr>
+                  <tr><td>M2: 핵심 기능 데모</td><td>Day 25</td><td>회원가입~수거 신청~상태 추적~알림톡 End-to-End 동작</td></tr>
+                  <tr><td>M3: 쇼핑몰·마이그레이션 데모</td><td>Day 40</td><td>토스페이먼츠 결제 성공 + 마이그레이션 검증 리포트 통과</td></tr>
+                  <tr><td>M4: 출시 준비 완료</td><td>Day 50</td><td>스토어 등록 / 웹 배포 / 컷오버 / 인수인계 문서 완료</td></tr>
+                </tbody>
+              </table>
+
+              <h2>커뮤니케이션 계획</h2>
+              <table>
+                <tr><th>항목</th><th>방식</th><th>주기</th></tr>
+                <tr><td>일일 진행 공유</td><td>Slack / 카카오톡</td><td>매일</td></tr>
+                <tr><td>주간 미팅</td><td>Zoom / Google Meet</td><td>주 1회</td></tr>
+                <tr><td>마일스톤 리뷰</td><td>화면 공유 + 데모 빌드</td><td>각 단계 완료 시</td></tr>
+                <tr><td>이슈 트래킹</td><td>GitHub Issues</td><td>상시</td></tr>
+                <tr><td>문서 공유</td><td>Notion / Google Docs</td><td>상시</td></tr>
+              </table>
+            </article>
+          </div>
+        </div>
+
+        <!-- ─── PAGE: PORTFOLIO ─── -->
+        <div id="page-portfolio" class="page-section space-y-6">
+          <div class="rounded-2xl border border-slate-200/70 bg-white/95 p-5 shadow-soft backdrop-blur md:p-8">
+            <article class="doc-content">
+              <h1>유사 프로젝트 경험</h1>
+              <blockquote>본 프로젝트와 가장 유사한 기술 스택(Flutter + Supabase) · 도메인(예약/결제) · 기능(포인트 이코노미)을 갖춘 3개 프로젝트를 선정하여 소개합니다.</blockquote>
+            </article>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4 md:grid-cols-4">
+            <div class="rounded-2xl border border-slate-200/70 bg-white/90 p-4 text-center shadow-soft backdrop-blur">
+              <p class="text-2xl font-bold text-sky-700">17K</p>
+              <p class="mt-1 text-xs text-slate-500">Flutter LOC (단일 코드베이스)</p>
+            </div>
+            <div class="rounded-2xl border border-slate-200/70 bg-white/90 p-4 text-center shadow-soft backdrop-blur">
+              <p class="text-2xl font-bold text-sky-700">3</p>
+              <p class="mt-1 text-xs text-slate-500">동시 출시 플랫폼 경험</p>
+            </div>
+            <div class="rounded-2xl border border-slate-200/70 bg-white/90 p-4 text-center shadow-soft backdrop-blur">
+              <p class="text-2xl font-bold text-sky-700">8+</p>
+              <p class="mt-1 text-xs text-slate-500">외부 서비스 통합 (결제·인증·알림 등)</p>
+            </div>
+            <div class="rounded-2xl border border-slate-200/70 bg-white/90 p-4 text-center shadow-soft backdrop-blur">
+              <p class="text-2xl font-bold text-sky-700">100%</p>
+              <p class="mt-1 text-xs text-slate-500">기획·디자인·개발 풀스코프</p>
+            </div>
+          </div>
+
+          <div class="space-y-4">
+            <div class="rounded-2xl border border-slate-200/70 bg-white/90 p-5 shadow-soft backdrop-blur md:p-8">
+              <div class="mb-3 inline-flex rounded-full border px-2.5 py-1 text-sm font-semibold tracking-[0.12em] bg-sky-100 text-sky-700 border-sky-200">B2C 모바일 앱 · Flutter + Supabase</div>
+              <h3 class="text-lg font-semibold tracking-tight text-slate-900">소셜 캘린더 앱 (Calendar Share)</h3>
+              <p class="mt-1 text-xs text-slate-400">소셜 네트워킹 / 일정 관리 · 2025.01 (MVP) · 참여율 100%</p>
+              <div class="mt-3 doc-content">
+                <h4>프로젝트 개요</h4>
+                <p>소셜 피드 + 캘린더를 단일 모바일 앱으로 통합한 크로스플랫폼 앱. Firebase + Supabase 듀얼 백엔드 아키텍처를 직접 설계·구축.</p>
+                <h4>핵심 기능</h4>
+                <ul>
+                  <li>Flutter 17K LOC 단일 코드베이스로 iOS·Android 45+ 화면 구현</li>
+                  <li>Firebase + Supabase 듀얼 백엔드 (Auth·DB·Storage·Realtime)</li>
+                  <li>7종 푸시 알림 + 딥링크 네비게이션</li>
+                  <li>QR 코드 기반 오프라인→온라인 사용자 연결</li>
+                </ul>
+                <h4>본 프로젝트와의 유사점</h4>
+                <ul>
+                  <li><strong>Flutter + Supabase 직접 구축 경험</strong> — Flutterflow가 생성하는 Flutter 코드 위에 Supabase Auth/RLS/Realtime/Storage를 안정적으로 통합 가능</li>
+                  <li><strong>모바일 앱 + 알림 시스템</strong> — 의류 수거 상태 변경 시 카카오 알림톡 트리거 패턴과 동일한 이벤트 기반 알림 구조</li>
+                  <li><strong>듀얼 백엔드 마이그레이션 패턴</strong> — 아임웹 → Supabase 데이터 이관 시 발생할 정합성·롤백 시나리오에 대한 직접 경험</li>
+                </ul>
+                <h4>기술 스택</h4>
+                <div class="flex flex-wrap gap-1.5 not-prose">
+                  <span class="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-sm text-slate-500">Flutter</span>
+                  <span class="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-sm text-slate-500">Dart</span>
+                  <span class="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-sm text-slate-500">Supabase</span>
+                  <span class="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-sm text-slate-500">Firebase</span>
+                  <span class="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-sm text-slate-500">FCM</span>
+                  <span class="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-sm text-slate-500">Provider</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="rounded-2xl border border-slate-200/70 bg-white/90 p-5 shadow-soft backdrop-blur md:p-8">
+              <div class="mb-3 inline-flex rounded-full border px-2.5 py-1 text-sm font-semibold tracking-[0.12em] bg-sky-100 text-sky-700 border-sky-200">B2B2C 앱 · 예약·결제·CRM</div>
+              <h3 class="text-lg font-semibold tracking-tight text-slate-900">필라테스 프랜차이즈 통합 관리 앱</h3>
+              <p class="mt-1 text-xs text-slate-400">예약·결제·CRM·커뮤니티 · 2019.09–2019.12 (4개월) · 참여율 100%</p>
+              <div class="mt-3 doc-content">
+                <h4>프로젝트 개요</h4>
+                <p>분산된 운영 도구(예약·결제·회원·매출·알림)를 단일 플랫폼으로 통합한 올인원 관리 앱. iOS·Android·반응형 웹 3 플랫폼 동시 출시.</p>
+                <h4>핵심 기능</h4>
+                <ul>
+                  <li>4개월 내 3 플랫폼 동시 출시 (Android·iOS·Web)</li>
+                  <li>예약 + 결제 + CRM + 매출 대시보드 + 채팅·커뮤니티 8개 모듈</li>
+                  <li>회원·강사·센터관리자·본사관리자 4단계 권한 분리</li>
+                  <li>예약·수강권 만기·결제 등 상황별 자동 알림</li>
+                </ul>
+                <h4>본 프로젝트와의 유사점</h4>
+                <ul>
+                  <li><strong>모바일·웹 3 플랫폼 동시 출시 검증된 패턴</strong> — Flutterflow 단일 코드베이스로 50일 내 iOS·Android·웹 동시 출시를 안정적으로 수행</li>
+                  <li><strong>예약/신청 + 결제 통합 운영 경험</strong> — 수거 슬롯 예약, 토스페이먼츠 결제, 픽포인트 차감을 단일 트랜잭션으로 설계 가능</li>
+                  <li><strong>다중 사용자 역할 + 자동 알림 트리거</strong> — 회원·운영자 분리, 상태 변경 시 카카오 알림톡 자동 발송 구조 직접 구현</li>
+                </ul>
+                <h4>기술 스택</h4>
+                <div class="flex flex-wrap gap-1.5 not-prose">
+                  <span class="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-sm text-slate-500">React Native</span>
+                  <span class="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-sm text-slate-500">React</span>
+                  <span class="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-sm text-slate-500">Node.js</span>
+                  <span class="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-sm text-slate-500">REST API</span>
+                  <span class="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-sm text-slate-500">FCM/APNs</span>
+                  <span class="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-sm text-slate-500">WebSocket</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="rounded-2xl border border-slate-200/70 bg-white/90 p-5 shadow-soft backdrop-blur md:p-8">
+              <div class="mb-3 inline-flex rounded-full border px-2.5 py-1 text-sm font-semibold tracking-[0.12em] bg-sky-100 text-sky-700 border-sky-200">B2C 앱 · Flutter + 포인트 이코노미</div>
+              <h3 class="text-lg font-semibold tracking-tight text-slate-900">게이미피케이션 알람 앱 (DayStarter)</h3>
+              <p class="mt-1 text-xs text-slate-400">헬스케어 · 게이미피케이션 · 포인트/리워드 · 2022.06~ · 참여율 100%</p>
+              <div class="mt-3 doc-content">
+                <h4>프로젝트 개요</h4>
+                <p>센서 기반 수면 인증 + 게이미피케이션 + 토큰 이코노미를 결합한 Flutter 앱. 7단계 루트박스 + 듀얼 토큰 + P2P 마켓플레이스 직접 기획·개발.</p>
+                <h4>핵심 기능</h4>
+                <ul>
+                  <li>Flutter 단일 코드베이스 + Kotlin 네이티브 모듈 + NestJS 백엔드</li>
+                  <li>듀얼 토큰 이코노미 (적립·소비·보유) + 트랜잭션 정합성 보장</li>
+                  <li>30+ API 엔드포인트, 37 데이터 모델, 48 화면</li>
+                  <li>광고 수익화(AdMob) + 6개국 스토어 리스팅</li>
+                </ul>
+                <h4>본 프로젝트와의 유사점</h4>
+                <ul>
+                  <li><strong>포인트 적립·차감 트랜잭션 정합성 직접 설계</strong> — 픽포인트(수거 적립 → 스토어 차감) 이중 검증·롤백 구조 그대로 적용 가능</li>
+                  <li><strong>Flutter 모바일 앱 풀스코프 운영 경험</strong> — Flutterflow가 산출하는 Flutter 코드의 디버깅·확장·스토어 배포까지 직접 수행</li>
+                  <li><strong>외부 서비스 8개+ 통합</strong> — Firebase·OAuth·결제·알림 등 다수 외부 서비스 통합 운영 경험으로 토스페이먼츠·카카오 OAuth·알림톡 동시 통합 안정화</li>
+                </ul>
+                <h4>기술 스택</h4>
+                <div class="flex flex-wrap gap-1.5 not-prose">
+                  <span class="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-sm text-slate-500">Flutter</span>
+                  <span class="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-sm text-slate-500">Kotlin</span>
+                  <span class="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-sm text-slate-500">NestJS</span>
+                  <span class="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-sm text-slate-500">PostgreSQL</span>
+                  <span class="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-sm text-slate-500">Firebase</span>
+                  <span class="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-sm text-slate-500">AdMob</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="rounded-2xl border border-sky-200/70 bg-gradient-to-br from-sky-50 to-brand-50 p-6 text-center shadow-soft md:p-10">
+            <h2 class="text-xl font-bold tracking-tight text-slate-900 md:text-2xl">함께 만들어 가겠습니다</h2>
+            <p class="mx-auto mt-3 max-w-lg text-sm leading-7 text-slate-600">프로젝트에 대해 더 자세한 논의를 원하시면 미팅을 신청해 주세요.</p>
+          </div>
+        </div>
+
+        <div id="page-nav" class="mt-6 flex items-center justify-between gap-4" style="display:none;">
+          <a id="nav-prev" href="#home"
+             class="group flex items-center gap-2 rounded-2xl border border-slate-200/70 bg-white/90 px-5 py-3 shadow-soft backdrop-blur transition hover:-translate-y-0.5 hover:border-sky-200 hover:bg-white">
+            <svg class="w-5 h-5 text-slate-400 transition group-hover:text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+            <span>
+              <span class="block text-xs text-slate-400">이전</span>
+              <span id="nav-prev-label" class="block text-sm font-semibold text-slate-700 group-hover:text-sky-700">홈</span>
+            </span>
+          </a>
+          <a id="nav-next" href="#overview"
+             class="group flex items-center gap-2 rounded-2xl border border-slate-200/70 bg-white/90 px-5 py-3 shadow-soft backdrop-blur transition hover:-translate-y-0.5 hover:border-sky-200 hover:bg-white text-right ml-auto">
+            <span>
+              <span class="block text-xs text-slate-400">다음</span>
+              <span id="nav-next-label" class="block text-sm font-semibold text-slate-700 group-hover:text-sky-700">프로젝트 소개</span>
+            </span>
+            <svg class="w-5 h-5 text-slate-400 transition group-hover:text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+          </a>
+        </div>
+
+      </main>
+    </div>
+
+    <footer class="mt-10 border-t border-slate-200 pt-6 text-xs text-slate-500">
+      &copy; 2026 &middot; 본 제안서는 의류 수거 서비스 앱/웹 개발 (Flutterflow + Supabase) 프로젝트를 위해 작성되었습니다.
+    </footer>
+  </div>
+
+  <script>
+    const pages = ['home', 'overview', 'estimate', 'manday', 'prd', 'timeline', 'portfolio'];
+    const pageLabels = {
+      home: '홈', overview: '프로젝트 소개', estimate: '견적서',
+      manday: '공수계산서', prd: 'PRD', timeline: '일정 제안', portfolio: '유사 프로젝트 경험'
+    };
+
+    function navigate(pageId) {
+      if (!pages.includes(pageId)) pageId = 'home';
+      document.querySelectorAll('.page-section').forEach(el => el.classList.remove('active'));
+      const target = document.getElementById('page-' + pageId);
+      if (target) target.classList.add('active');
+      document.querySelectorAll('.nav-link').forEach(link => {
+        if (link.dataset.page === pageId) {
+          link.className = 'nav-link block rounded-xl border px-3 py-2 text-sm border-sky-200 bg-sky-50 font-medium text-sky-700';
+        } else {
+          link.className = 'nav-link block rounded-xl border border-transparent px-3 py-2 text-sm text-slate-600 hover:border-slate-200 hover:bg-slate-50 hover:text-slate-900';
+        }
+      });
+      updatePageNav(pageId);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      closeSidebar();
+    }
+
+    function updatePageNav(pageId) {
+      const nav = document.getElementById('page-nav');
+      const idx = pages.indexOf(pageId);
+      const prevBtn = document.getElementById('nav-prev');
+      const nextBtn = document.getElementById('nav-next');
+      const prevLabel = document.getElementById('nav-prev-label');
+      const nextLabel = document.getElementById('nav-next-label');
+      nav.style.display = (pageId === 'home') ? 'none' : 'flex';
+      if (idx > 0) {
+        prevBtn.href = '#' + pages[idx - 1];
+        prevLabel.textContent = pageLabels[pages[idx - 1]];
+        prevBtn.style.visibility = 'visible';
+      } else { prevBtn.style.visibility = 'hidden'; }
+      if (idx < pages.length - 1) {
+        nextBtn.href = '#' + pages[idx + 1];
+        nextLabel.textContent = pageLabels[pages[idx + 1]];
+        nextBtn.style.visibility = 'visible';
+      } else { nextBtn.style.visibility = 'hidden'; }
+    }
+
+    function closeSidebar() {
+      document.getElementById('sidebar').classList.remove('open');
+      document.getElementById('sidebar-backdrop').classList.remove('open');
+    }
+
+    function handleHash() {
+      const hash = (location.hash || '#home').replace('#', '');
+      navigate(hash);
+    }
+    window.addEventListener('hashchange', handleHash);
+    window.addEventListener('DOMContentLoaded', handleHash);
+
+    document.getElementById('sidebar-toggle').addEventListener('click', function() {
+      document.getElementById('sidebar').classList.toggle('open');
+      document.getElementById('sidebar-backdrop').classList.toggle('open');
+    });
+  </script>
+</body>
+</html>
