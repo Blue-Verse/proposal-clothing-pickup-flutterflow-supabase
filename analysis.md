@@ -114,7 +114,7 @@ job:
 
 ## 5. 최종 제안 요약
 
-- **지원 금액**: 9,000,000원 (VAT 별도) — 클라이언트 예상 1,000만원 × 90%
+- **지원 금액**: 8,500,000원 (VAT 별도) — 클라이언트 예상 1,000만원 × 85%
 - **지원 기간**: 50일 — 클라이언트 예상 그대로
 - **핵심 제안 포인트**:
   1. Flutter + Supabase 듀얼 백엔드 직접 구축 경험 — Flutterflow 산출 코드 위에서 Supabase 안정 통합
@@ -129,7 +129,7 @@ job:
 https://proposal-router.claude-ai-b27.workers.dev/proposal-clothing-pickup-flutterflow-supabase/
 
 ### 6.2 지원 금액
-9,000,000원 (VAT 별도)
+8,500,000원 (VAT 별도)
 
 ### 6.3 지원 기간
 50일 (2026-05-18 ~ 2026-07-06)
